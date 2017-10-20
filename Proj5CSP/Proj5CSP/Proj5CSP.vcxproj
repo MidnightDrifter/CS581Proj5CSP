@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -113,11 +113,13 @@
   <ItemGroup>
     <ClInclude Include="..\..\contraints.graph.h" />
     <ClInclude Include="..\..\contraints.h" />
+    <ClInclude Include="..\..\csp.h" />
     <ClInclude Include="..\..\variable.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\contraints.cpp" />
     <ClCompile Include="..\..\contraints.graph.cpp" />
+    <ClCompile Include="..\..\csp.cpp" />
     <ClCompile Include="..\..\main-online.cpp" />
     <ClCompile Include="..\..\main.cpp" />
     <ClCompile Include="..\..\variable.cpp" />
