@@ -1,5 +1,4 @@
 #include "csp.h"
-
 #ifdef INLINE_CSP
 	//#warning "INFO - inlining CSP methods"
 	#define INLINE inline
@@ -166,17 +165,28 @@ bool CSP<T>::AssignmentIsConsistent( Variable* p_var ) const {
 
 
 
+	for (auto constraintIter = cg.GetConstraints(p_var).begin(); constraintIter != cg.GetConstraints(p_var).end(); constraintIter++)
+	{
+		Constraint* temp = (*constraintIter)->clone();
+		temp->AddVariable(p_var);
+		if (!temp->Satisfiable())
+		{
+			delete temp;  //Check if this deletes all the variables inside it!!
+			return false;
+		}
+
+		delete temp;   //Check if this deletes all the variables inside it!!
+	}
 
 
-
-
+	return true;
 
 
 }
 ////////////////////////////////////////////////////////////
 //insert pair 
 //(neighbors of the current variable, the current variable)
-//current variable is th variable that just lost some values
+//current variable is the variable that just lost some values
 // for all y~x insert (y,x)
 //into arc-consistency queue
 template <typename T> 
@@ -217,11 +227,28 @@ bool CSP<T>::CheckArcConsistency(Variable* x) {
 ////////////////////////////////////////////////////////////
 //CHECK that for each value of x there is a value of y 
 //which makes all constraints involving x and y satisfiable
+
+
+//Do I actually go through and remove the values that are inconsistent, or just check for them here??
+
 template <typename T> 
 INLINE
 bool CSP<T>::RemoveInconsistentValues(Variable* x,Variable* y,const Constraint* c) {
 
 
+	bool out = false;
+
+	Constraint* temp = c->clone();
+	temp->AddVariable(x);
+	temp->AddVariable(y);   //Check if the Constraint destructor deletes the variables inside it!
+
+	if (temp)
+	{
+		out = temp->Satisfiable();
+		delete temp;   //Check if this deletes vars inside it!
+	}
+
+	return out;
 
 
 
@@ -243,6 +270,22 @@ typename CSP<T>::Variable* CSP<T>::MinRemVal() {
 
 
 
+	auto i = cg.GetAllVariables.begin();
+
+	CSP<T>::Variable* out = *i;   //If there are no variables, something will go wrong here most likely
+
+	for ( ; i != cg.GetAllVariables().end(); i++)
+	{
+		
+		if (out->SizeDomain() > (*i)->SizeDomain())
+		{
+			out = *i;
+		}
+		
+
+	}
+
+	return out;
 
 
 
@@ -260,9 +303,25 @@ typename CSP<T>::Variable* CSP<T>::MaxDegreeHeuristic() {
 
 
 
+	//Choose variable that touches the MOST constraints
+	//Vars don't know about constraints, but constraints know about vars
+
+	//Variable* out = nullptr;
 
 
+	std::pair<Variable*, int> temp(nullptr, 0);
 
+	for (auto varIter = cg.GetAllVariables.begin(); varIter != cg.GetAllVariables.end(); varIter++)
+	{
+		if (cg.GetConstraints(*varIter).size() > temp.second)
+		{
+			temp.first = *varIter;
+			temp.second = cg.GetConstraints(*varIter);
+		}
+	}
+
+
+	return pair.first;
 
 
 
