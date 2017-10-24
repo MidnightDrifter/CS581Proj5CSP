@@ -109,6 +109,71 @@ template <typename T>
 INLINE
 bool CSP<T>::ForwardChecking(Variable *x) {
 
+	//Only inserts if this will NOT make the problem impossible--i.e. it reduces the number of values in a given variable's range to 0
+	
+
+	//For each neighbor variable in constraint graph:
+		//Get set of constraints that involve that variable & the input var
+		//Check these constraints for solvability
+			//if ANY constraint is unsolvable, cannot assign this variable, abort and break, revert changes, return false
+		
+
+	//If we get out of the loop successfully, the assignment is ok, return true
+
+
+	
+	//std::vector<const Constraint*>& tempConstraints = cg.
+	std::set<Variable*>& neighbors = cg.GetNeighbors(x);
+	std::set<const Constraint*>* connectingConstraints = nullptr;     // , *constraintsCopy = NULL;
+	Constraint* constraintCopy = NULL;
+	for (auto i = neighbors.begin(); i != neighbors.end(); i++)
+	{
+		connectingConstraints = cg.GetConnectingConstraints(x, *i);
+		//*constraintsCopy = *connectingConstraints;
+
+
+		if (connectingConstraints)
+		{
+			for (auto j = connectingConstraints->begin(); j != connectingConstraints->end(); j++)
+			{
+				constraintCopy = (*j)->clone();
+				constraintCopy->AddVariable(x);
+				
+				
+				
+				if (!constraintCopy->Satisfiable())
+				{ 
+					delete temp;
+					delete constraintCopy;
+					return false;
+				}
+
+				else
+				{
+					delete constraintCopy;
+					constraintCopy = nullptr;
+				}
+
+
+
+
+
+
+			}
+		
+		
+		}
+	}
+
+
+	//Got out of the loop, assignment is OK--get rid of the temporary & assign the variable into the ACTUAL constraint graph array
+	connectingConstraints = nullptr;
+	this->cg.InsertVariable(x);
+
+
+
+
+	return true;
 
 
 
@@ -168,6 +233,7 @@ bool CSP<T>::AssignmentIsConsistent( Variable* p_var ) const {
 	for (auto constraintIter = cg.GetConstraints(p_var).begin(); constraintIter != cg.GetConstraints(p_var).end(); constraintIter++)
 	{
 		Constraint* temp = (*constraintIter)->clone();
+		
 		temp->AddVariable(p_var);
 		if (!temp->Satisfiable())
 		{
@@ -195,7 +261,26 @@ void CSP<T>::InsertAllArcsTo( Variable* cv ) {
 
 
 
+	//for each neighbor of cv
+		//for each constraint connecting cv & current neighbor
+			//push back into arc-consistency queue
 
+
+
+
+	for (auto neighborIter = cg.GetNeighbors(cv).begin(); neighborIter != cg.GetNeighbors(cv).end(); neighborIter++)
+	{
+		for (auto constraintIter = cg.GetConnectingConstraints(*neighborIter, cv).begin(); constraintIter != cg.GetConnectingConstraints(*neighborIter, cv).end(); constraintIter++)
+		{
+
+			arc_consistency.emplace(*neighborIter, cv, *constraintIter);
+
+
+
+		}
+	
+	
+	}
 
 
 
@@ -214,7 +299,10 @@ bool CSP<T>::CheckArcConsistency(Variable* x) {
 
 
 
-
+	//while arc queue isn't empty:
+		//testArc = arc_queue.top, pop
+		//if(remove inconsistent values)
+			//for each neighbor
 
 
 
@@ -235,7 +323,7 @@ template <typename T>
 INLINE
 bool CSP<T>::RemoveInconsistentValues(Variable* x,Variable* y,const Constraint* c) {
 
-
+/*
 	bool out = false;
 
 	Constraint* temp = c->clone();
@@ -248,6 +336,12 @@ bool CSP<T>::RemoveInconsistentValues(Variable* x,Variable* y,const Constraint* 
 		delete temp;   //Check if this deletes vars inside it!
 	}
 
+	if (out)
+	{
+		
+		c->AddVariable(x);
+			c->AddVariable(y);
+	}
 	return out;
 
 
@@ -255,8 +349,72 @@ bool CSP<T>::RemoveInconsistentValues(Variable* x,Variable* y,const Constraint* 
 
 
 
+	*/
+
+//Returns true if values were removed successfully -- removing values from X
+
+	bool out = false;
+
+	Constraint* constraintTemp = nullptr;  // c->clone();
+	//Variable* yTemp = y->clone();
+	//Variable* xCopy = y->clone();
 
 
+	//for each value of X
+		//Constraint = constraint->clone()
+		//Variable testX = Variable(that value of X) & assign its value
+		//Push into constraint
+		//if constraint isn't satisfiable
+			//Remove value from X
+			//Set out to 'true' -- values have been removed!
+		
+	
+	for (auto valIterator = x->GetDomain().begin(); valIterator != x->GetDomain().end(); valIterator++)
+	{
+		x->Assign(*valIterator);	
+		bool satisfiable = false;
+		for (auto yIterator = y->GetDomain.begin(); yIterator != y->GetDomain().end(); )
+		{
+			y->Assign(*yIterator);
+			constraintTemp = c->clone();
+			//bool satisfiable = false;
+			constraintTemp->AddVariable(x);
+			constraintTemp->AddVariable(y);
+			if (constraintTemp->Satisfiable())
+			{
+			
+				yIterator = y->GetDomain().end();
+				y->UnAssign();
+				satisfiable = true;
+			}
+
+
+			else
+			{
+				
+				yIterator++;
+			}
+
+			delete constraintTemp;
+			constraintTemp = nullptr;
+
+
+		}
+
+
+		if (!satisfiable)
+		{
+			x->RemoveValue(*valIterator);
+
+			out = true;
+		}
+
+		x->UnAssign();
+
+	}
+
+
+	return out;
 
 
 }
