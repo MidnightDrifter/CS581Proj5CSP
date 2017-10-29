@@ -305,10 +305,66 @@ bool CSP<T>::CheckArcConsistency(Variable* x) {
 			//for each neighbor
 
 
+	//Assuming x has been assigned to already
+
+
+	Variable xCopy = *x;
+
+	//Potentially save all variables out here
+	//Actually, we'll probably NEED to save them out here.  I think
+
+
+	while(!arc_consistency.empty()))
+	{
+	Arc<Constraint> arc = *arc_consistenty.begin();
+	arc_consistency.erase(arc_consistenty.begin());
+
+	for (auto yIterator = cg.GetNeighbors(x).begin(); yIterator != cg.GetNeighbors(x).end(); yIterator++)
+	{
+		for (auto constraintIter = cg.GetConnectingConstraints(x, *yIterator).begin(), constraintIter != cg.GetConnectingConstraints(x, *yIterator).end(); constraintIter++)
+		{
+
+			//IF we remove values, we gotta check all the new arcs we just made
+			//IF X ever runs out of values, we now know it's not satisfiable, return FALSE
+
+
+			if (!(*constraintIter)->Satisfiable()  || x->SizeDomain() == 0)
+			{
+				if (x->IsAssigned())
+				{
+					x->UnAssign();
+				}
+
+				if ((*yIterator)->IsAssigned())
+				{
+					(*yIterator)->UnAssign();
+				}
+
+
+				x = xCopy;
+				//Potentially load all variables in here
+				return false;
+
+			}
+
+
+
+			if (this->RemoveInconsistentValues(x, *yIterator, *constraintIter))
+			{
+				this->InsertAllArcsTo(x);
+			}
 
 
 
 
+
+
+		}
+	}
+
+
+
+	}
 
 
 }
@@ -384,7 +440,7 @@ bool CSP<T>::RemoveInconsistentValues(Variable* x,Variable* y,const Constraint* 
 			{
 			
 				yIterator = y->GetDomain().end();
-				y->UnAssign();
+		
 				satisfiable = true;
 			}
 
@@ -394,7 +450,7 @@ bool CSP<T>::RemoveInconsistentValues(Variable* x,Variable* y,const Constraint* 
 				
 				yIterator++;
 			}
-
+			y->UnAssign();
 			delete constraintTemp;
 			constraintTemp = nullptr;
 
