@@ -27,21 +27,67 @@ bool CSP<T>::SolveDFS(unsigned level) {
 	//std::cout << "entering SolveDFS (level " << level << ")\n";
 
 
+	//Place base case before or after this counter??
+
+	if (cg.AllVariablesAssigned())
+	{
+		return true;
+	}
 
 
-
-    //choose a variable by MRV
+    
+	
+	
+	//choose a variable by MRV
 	Variable* var_to_assign = MinRemVal();
 	//Variable* var_to_assign = MaxDegreeHeuristic();
 
 
+	if (!var_to_assign)
+	{
+		return false;   //Something has gone wrong
+	}
 
 
 
-    loop( ... ) {
+
+
+    //loop(... )
+
+	for (auto varRangeIter = var_to_assign->GetDomain().begin(); varRangeIter != var_to_assign->GetDomain().end(); varRangeIter++)
+	{
+
+
+
         ++iteration_counter;
 
 
+
+
+		//For each value in var_to_assign
+			//Try and assign it to var
+			//If it breaks a constraint, unassign & move to next iteration
+			//Otherwise, return SolveDFS(level + 1)
+		//If NO values work, return false--this branch won't work
+
+
+		Variable varCopy = *var_to_assign;
+
+		var_to_assign->Assign(varRangeIter);
+
+		//Assignment doesn't work, try again
+		if (!(this->AssignmentIsConsistent(var_to_assign)))
+		{
+			var_to_assign->UnAssign();
+			*var_to_assign = varCopy;
+		}
+
+		else
+		{
+			return SolveDFS(level + 1);
+		}
+			
+	
 
     }
 
