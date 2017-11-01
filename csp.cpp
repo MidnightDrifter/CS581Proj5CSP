@@ -43,7 +43,7 @@ bool CSP<T>::SolveDFS(unsigned level) {
 	//Variable* var_to_assign = MaxDegreeHeuristic();
 
 
-	if (!var_to_assign)
+	if (!var_to_assign || var_to_assign->SizeDomain()==0)
 	{
 		return false;   //Something has gone wrong
 	}
@@ -84,6 +84,7 @@ bool CSP<T>::SolveDFS(unsigned level) {
 
 		else
 		{
+			
 			return SolveDFS(level + 1);
 		}
 			
@@ -103,19 +104,48 @@ bool CSP<T>::SolveFC(unsigned level) {
 	++recursive_call_counter;
 	//std::cout << "entering SolveFC (level " << level << ")\n";
 
+	if (cg.AllVariablesAssigned())
+	{
+		return true;
+	}
 	
     
     //choose a variable by MRV
 	Variable* var_to_assign = MinRemVal();
 	//Variable* var_to_assign = MaxDegreeHeuristic();
 
-	
+	if (!var_to_assign || var_to_assign->SizeDomain() == 0)
+	{
+		return false;   //Something has gone wrong
+	}
 
-    loop( ... ) {
+
+
+	//Save variable states
+	//If var_to_assign's domain is EMPTY, return false
+
+	std::map<Variable*, std::set<typename Variable::Value> > state = this->SaveState(var_to_assign);
+
+    //loop( ... ) {
+	for (auto varRangeIter = var_to_assign->GetDomain().begin(); varRangeIter != var_to_assign->GetDomain().end(); varRangeIter++)
+	{
         ++iteration_counter;
 
+		//Try to assign value to x
+		//Check forward checking--don't need to save this value, forward checking SHOULD handle the saving & reverting on its own
+		Variable varCopy = *var_to_assign;
+		var_to_assign->Assign(*varRangeIter);
+		if (ForwardChecking(var_to_assign) && AssignmentIsConsistent(var_to_assign))  //Forward checking should take care of the consistent bit, but just in case...
+		{
+			return SolveFC(level + 1);
+		}
 
-
+		else
+		{
+			var_to_assign->UnAssign();
+			*var_to_assign = varCopy;
+			this->LoadState(state);
+		}
     }
 
 
@@ -129,19 +159,51 @@ bool CSP<T>::SolveARC(unsigned level) {
 	//std::cout << "entering SolveARC (level " << level << ")\n";
 
 	
-    
+	if (cg.AllVariablesAssigned())
+	{
+		return true;
+	}
+
     
     
     //choose a variable by MRV
 	Variable* var_to_assign = MinRemVal();
+    
+    
+	if (!var_to_assign || var_to_assign->SizeDomain() == 0)
+	{
+		return false;   //Something has gone wrong
+	}
+
+
+	std::map<Variable*, std::set<typename Variable::Value> > state = this->SaveState(var_to_assign);
+
+
+
+
+
 
     
-    
-	
-    
-    loop( ... ) {
+    //loop( ... ) {
+	for (auto varRangeIter = var_to_assign->GetDomain().begin(); varRangeIter != var_to_assign->GetDomain().end(); varRangeIter++)
+	{
         ++iteration_counter;
 
+		Variable varCopy = *var_to_assign;
+
+		var_to_assign->Assign(*varRangeIter);
+
+		if (CheckArcConsistency(var_to_assign) && AssignmentIsConsistent(var_to_assign))
+		{
+			return SolveARC(level + 1);
+		}
+
+		else
+		{
+			var_to_assign->UnAssign();
+			*var_to_assign = varCopy;
+			this->LoadState(state);
+		}
 
 
     }
@@ -214,7 +276,7 @@ bool CSP<T>::ForwardChecking(Variable *x) {
 
 	//Got out of the loop, assignment is OK--get rid of the temporary & assign the variable into the ACTUAL constraint graph array
 	connectingConstraints = nullptr;
-	this->cg.InsertVariable(x);
+	//this->cg.InsertVariable(x);
 
 
 
