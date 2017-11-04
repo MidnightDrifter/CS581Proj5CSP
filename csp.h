@@ -50,7 +50,7 @@ class CSP {
 		int GetIterationCounter() const { return iteration_counter; }
 
 		//CSP counting
-		bool SolveFC_count(unsigned level);
+		bool SolveFC_count(unsigned level) { return false; }
 		//CSP solver, brute force - no forward checking
 		bool SolveDFS(unsigned level);
 		//CSP solver, uses forward checking

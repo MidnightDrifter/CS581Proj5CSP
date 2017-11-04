@@ -43,24 +43,24 @@ bool CSP<T>::SolveDFS(unsigned level) {
 	//Variable* var_to_assign = MaxDegreeHeuristic();
 
 
-	if (!var_to_assign || var_to_assign->SizeDomain()==0)
-	{
-		return false;   //Something has gone wrong
-	}
+	
 
 
 
 
 
     //loop(... )
-
-	for (auto varRangeIter = var_to_assign->GetDomain().begin(); varRangeIter != var_to_assign->GetDomain().end(); varRangeIter++)
+	 auto varRangeIterEnd = var_to_assign->GetDomain().end();
+	for ( auto varRangeIter = var_to_assign->GetDomain().begin(); varRangeIter != varRangeIterEnd; varRangeIter++ )
 	{
-
+		//auto iterCopy = varRangeIter;
+	
 
 
         ++iteration_counter;
 
+
+	
 
 
 
@@ -71,21 +71,30 @@ bool CSP<T>::SolveDFS(unsigned level) {
 		//If NO values work, return false--this branch won't work
 
 
-		Variable varCopy = *var_to_assign;
+		//Variable varCopy = *var_to_assign;
 
-		var_to_assign->Assign(varRangeIter);
+		var_to_assign->Assign(*varRangeIter);
 
 		//Assignment doesn't work, try again
 		if (!(this->AssignmentIsConsistent(var_to_assign)))
 		{
+			
 			var_to_assign->UnAssign();
-			*var_to_assign = varCopy;
+			//*var_to_assign = varCopy;
+			//varRangeIterEnd = var_to_assign->GetDomain().end();
 		}
 
 		else
 		{
-			
-			return SolveDFS(level + 1);
+
+			//delete var_to_assign;
+			bool result = SolveDFS(level + 1);
+			if(result)
+			{
+				return result;
+			}
+			//return SolveDFS(level + 1);
+			var_to_assign->UnAssign();
 		}
 			
 	
@@ -94,6 +103,7 @@ bool CSP<T>::SolveDFS(unsigned level) {
 
 
 
+	return false;
 }
 
 
@@ -148,6 +158,7 @@ bool CSP<T>::SolveFC(unsigned level) {
 		}
     }
 
+	return false;
 
 
 }
@@ -208,7 +219,7 @@ bool CSP<T>::SolveARC(unsigned level) {
 
     }
 
-
+	return false;
 
 }
 
@@ -218,41 +229,41 @@ INLINE
 bool CSP<T>::ForwardChecking(Variable *x) {
 
 	//Only inserts if this will NOT make the problem impossible--i.e. it reduces the number of values in a given variable's range to 0
-	
+
 
 	//For each neighbor variable in constraint graph:
 		//Get set of constraints that involve that variable & the input var
 		//Check these constraints for solvability
 			//if ANY constraint is unsolvable, cannot assign this variable, abort and break, revert changes, return false
-		
+
 
 	//If we get out of the loop successfully, the assignment is ok, return true
 
 
-	
+
 	//std::vector<const Constraint*>& tempConstraints = cg.
-	std::set<Variable*>& neighbors = cg.GetNeighbors(x);
-	std::set<const Constraint*>* connectingConstraints = nullptr;     // , *constraintsCopy = NULL;
+	const std::set<Variable*>& neighbors = cg.GetNeighbors(x);
+	// = nullptr;     // , *constraintsCopy = NULL;
 	Constraint* constraintCopy = NULL;
 	for (auto i = neighbors.begin(); i != neighbors.end(); i++)
 	{
-		connectingConstraints = cg.GetConnectingConstraints(x, *i);
-		//*constraintsCopy = *connectingConstraints;
+		const std::set<const Constraint*>& connectingConstraints = cg.GetConnectingConstraints(x, (*i));
+		//  *constraintsCopy = *connectingConstraints;
 
 
-		if (connectingConstraints)
-		{
-			for (auto j = connectingConstraints->begin(); j != connectingConstraints->end(); j++)
+		
+			for (auto j = connectingConstraints.begin(); j != connectingConstraints.end(); j++)
 			{
 				constraintCopy = (*j)->clone();
 				constraintCopy->AddVariable(x);
-				
-				
-				
+
+
+
 				if (!constraintCopy->Satisfiable())
-				{ 
-					delete temp;
+				{
+					//delete temp;
 					delete constraintCopy;
+					constraintCopy = nullptr;
 					return false;
 				}
 
@@ -268,16 +279,31 @@ bool CSP<T>::ForwardChecking(Variable *x) {
 
 
 			}
+
+
 		
-		
-		}
 	}
 
 
 	//Got out of the loop, assignment is OK--get rid of the temporary & assign the variable into the ACTUAL constraint graph array
-	connectingConstraints = nullptr;
+	//connectingConstraints = nullptr;
 	//this->cg.InsertVariable(x);
+	/*
+	for (auto i = neighbors.begin(); i != neighbors.end(); i++)
+	{
+		connectingConstraints = cg.GetConnectingConstraints(x, *i);
+		//   *constraintsCopy = *connectingConstraints;
 
+
+		if (connectingConstraints)
+		{
+			for (auto j = connectingConstraints->begin(); j != connectingConstraints->end(); j++)
+			{
+				(*j)->AddVariable(x);
+			}
+		}
+	}
+	*/
 
 
 
@@ -340,16 +366,16 @@ bool CSP<T>::AssignmentIsConsistent( Variable* p_var ) const {
 
 	for (auto constraintIter = cg.GetConstraints(p_var).begin(); constraintIter != cg.GetConstraints(p_var).end(); constraintIter++)
 	{
-		Constraint* temp = (*constraintIter)->clone();
+		//Constraint* temp = (*constraintIter)->clone();
 		
-		temp->AddVariable(p_var);
-		if (!temp->Satisfiable())
+		//temp->AddVariable(p_var);
+		if (!(*constraintIter)->Satisfiable())
 		{
-			delete temp;  //Check if this deletes all the variables inside it!!
+		//	delete temp;  //Check if this deletes all the variables inside it!!
 			return false;
 		}
 
-		delete temp;   //Check if this deletes all the variables inside it!!
+		//delete temp;   //Check if this deletes all the variables inside it!!
 	}
 
 
@@ -381,7 +407,7 @@ void CSP<T>::InsertAllArcsTo( Variable* cv ) {
 		for (auto constraintIter = cg.GetConnectingConstraints(*neighborIter, cv).begin(); constraintIter != cg.GetConnectingConstraints(*neighborIter, cv).end(); constraintIter++)
 		{
 
-			arc_consistency.emplace(*neighborIter, cv, *constraintIter);
+			this->arc_consistency.emplace(*neighborIter, cv, *constraintIter);
 
 
 
@@ -422,47 +448,52 @@ bool CSP<T>::CheckArcConsistency(Variable* x) {
 	//Actually, we'll probably NEED to save them out here.  I think
 
 
-	while(!arc_consistency.empty()))
+	while (!(this->arc_consistency.empty()))
 	{
-	Arc<Constraint> arc = *arc_consistenty.begin();
-	arc_consistency.erase(arc_consistenty.begin());
+	//	Arc<Constraint> arc = *(this->arc_consistency).begin();
+	//	(this->arc_consistency).erase((this->arc_consistency).begin());
 
-	for (auto yIterator = cg.GetNeighbors(x).begin(); yIterator != cg.GetNeighbors(x).end(); yIterator++)
-	{
-		for (auto constraintIter = cg.GetConnectingConstraints(x, *yIterator).begin(), constraintIter != cg.GetConnectingConstraints(x, *yIterator).end(); constraintIter++)
+		for (auto yIterator = cg.GetNeighbors(x).begin(); yIterator != cg.GetNeighbors(x).end(); yIterator++)
 		{
-
-			//IF we remove values, we gotta check all the new arcs we just made
-			//IF X ever runs out of values, we now know it's not satisfiable, return FALSE
-
-
-			if (!(*constraintIter)->Satisfiable()  || x->SizeDomain() == 0)
+			for (auto constraintIter = cg.GetConnectingConstraints(x, *yIterator).begin(); constraintIter != cg.GetConnectingConstraints(x, *yIterator).end(); constraintIter++)
 			{
-				if (x->IsAssigned())
+
+				//IF we remove values, we gotta check all the new arcs we just made
+				//IF X ever runs out of values, we now know it's not satisfiable, return FALSE
+
+				
+				if (!(*constraintIter)->Satisfiable() || x->SizeDomain() == 0)
 				{
-					x->UnAssign();
+					if (x->IsAssigned())
+					{
+						x->UnAssign();
+					}
+
+					if ((*yIterator)->IsAssigned())
+					{
+						(*yIterator)->UnAssign();
+					}
+
+
+					*x = xCopy;
+					//Potentially load all variables in here
+					return false;
+
 				}
 
-				if ((*yIterator)->IsAssigned())
+
+
+				if (this->RemoveInconsistentValues(x, *yIterator, *constraintIter))
 				{
-					(*yIterator)->UnAssign();
+					this->InsertAllArcsTo(x);
 				}
 
 
-				x = xCopy;
-				//Potentially load all variables in here
-				return false;
 
-			}
 
 
 
-			if (this->RemoveInconsistentValues(x, *yIterator, *constraintIter))
-			{
-				this->InsertAllArcsTo(x);
 			}
-
-
 
 
 
@@ -470,11 +501,7 @@ bool CSP<T>::CheckArcConsistency(Variable* x) {
 		}
 	}
 
-
-
-	}
-
-
+	return false;
 }
 ////////////////////////////////////////////////////////////
 //CHECK that for each value of x there is a value of y 
@@ -537,7 +564,7 @@ bool CSP<T>::RemoveInconsistentValues(Variable* x,Variable* y,const Constraint* 
 	{
 		x->Assign(*valIterator);	
 		bool satisfiable = false;
-		for (auto yIterator = y->GetDomain.begin(); yIterator != y->GetDomain().end(); )
+		for (auto yIterator = y->GetDomain().begin(); yIterator != y->GetDomain().end(); )
 		{
 			y->Assign(*yIterator);
 			constraintTemp = c->clone();
@@ -592,17 +619,24 @@ typename CSP<T>::Variable* CSP<T>::MinRemVal() {
 
 
 
-	auto i = cg.GetAllVariables.begin();
+	auto i = cg.GetAllVariables().begin();
 
-	CSP<T>::Variable* out = *i;   //If there are no variables, something will go wrong here most likely
+	CSP<T>::Variable* out = nullptr;   //If there are no variables, something will go wrong here most likely
 
 	for ( ; i != cg.GetAllVariables().end(); i++)
 	{
-		
-		if (out->SizeDomain() > (*i)->SizeDomain())
+
+		if (!(*i)->IsAssigned())
 		{
-			out = *i;
+			if (nullptr == out || (out->SizeDomain() > (*i)->SizeDomain()) )
+			{
+				out = *i;
+			}
+
+			
 		}
+		
+
 		
 
 	}
@@ -643,7 +677,7 @@ typename CSP<T>::Variable* CSP<T>::MaxDegreeHeuristic() {
 	}
 
 
-	return pair.first;
+	return temp.first;
 
 
 

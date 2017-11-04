@@ -1,6 +1,6 @@
 PRG=gnu.exe
 GCC=g++
-GCCFLAGS=-O2 -Wall -Wextra -ansi -pedantic -Wold-style-cast -Woverloaded-virtual -Wsign-promo  -Wctor-dtor-privacy -Wnon-virtual-dtor -Wreorder
+GCCFLAGS=-O2 -Wall -Wextra -std=c++11 -pedantic -Wold-style-cast -Woverloaded-virtual -Wsign-promo  -Wctor-dtor-privacy -Wnon-virtual-dtor -Wreorder
 DEFINE=-DINLINE_VARIABLE -DINLINE_CONSTRAINT_GRAPH -DINLINE_CONSTRAINT -DINLINE_CSP 
 
 VALGRIND_OPTIONS=-q --leak-check=full
