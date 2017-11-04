@@ -147,7 +147,18 @@ bool CSP<T>::SolveFC(unsigned level) {
 		var_to_assign->Assign(*varRangeIter);
 		if (ForwardChecking(var_to_assign) && AssignmentIsConsistent(var_to_assign))  //Forward checking should take care of the consistent bit, but just in case...
 		{
-			return SolveFC(level + 1);
+
+			bool result = SolveFC(level + 1);
+			if (result)
+			{
+				return result;
+			}
+			//return SolveDFS(level + 1);
+
+			var_to_assign->UnAssign();
+			*var_to_assign = varCopy;
+			this->LoadState(state);
+			//return SolveFC(level + 1);
 		}
 
 		else
